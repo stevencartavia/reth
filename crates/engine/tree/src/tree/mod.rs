@@ -3143,10 +3143,7 @@ where
 
     /// Checks whether the parent state for the given hash is available, either in memory or in the
     /// database.
-    fn has_parent_state(&self, hash: B256) -> ProviderResult<bool>
-    where
-        P: BlockReader,
-    {
+    fn has_parent_state(&self, hash: B256) -> ProviderResult<bool> {
         // Lookup for in-memory blocks
         if self.state.tree_state.contains_hash(&hash) {
             return Ok(true)
