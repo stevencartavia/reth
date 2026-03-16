@@ -523,6 +523,8 @@ where
     pub precompile_cache_disabled: bool,
     /// The precompile cache map.
     pub precompile_cache_map: PrecompileCacheMap<SpecFor<Evm>>,
+    /// Whether BAL batched IO is disabled.
+    pub disable_bal_batch_io: bool,
 }
 
 /// Per-thread EVM state initialised by [`PrewarmContext::evm_for_ctx`] and stored in
@@ -637,16 +639,25 @@ where
 
         let _ = state_provider.basic_account(&account.address);
 
-        let slots: Vec<StorageKey> = account
-            .storage_changes
-            .iter()
-            .map(|s| StorageKey::from(s.slot))
-            .merge_join_by(account.storage_reads.iter().map(|&s| StorageKey::from(s)), Ord::cmp)
-            .map(|either| match either {
-                EitherOrBoth::Left(k) | EitherOrBoth::Right(k) | EitherOrBoth::Both(k, _) => k,
-            })
-            .collect();
-        let _ = state_provider.storage_range(account.address, &slots);
+        if self.disable_bal_batch_io {
+            for slot in &account.storage_changes {
+                let _ = state_provider.storage(account.address, StorageKey::from(slot.slot));
+            }
+            for &slot in &account.storage_reads {
+                let _ = state_provider.storage(account.address, StorageKey::from(slot));
+            }
+        } else {
+            let slots: Vec<StorageKey> = account
+                .storage_changes
+                .iter()
+                .map(|s| StorageKey::from(s.slot))
+                .merge_join_by(account.storage_reads.iter().map(|&s| StorageKey::from(s)), Ord::cmp)
+                .map(|either| match either {
+                    EitherOrBoth::Left(k) | EitherOrBoth::Right(k) | EitherOrBoth::Both(k, _) => k,
+                })
+                .collect();
+            let _ = state_provider.storage_range(account.address, &slots);
+        }
 
         self.metrics.bal_slot_iteration_duration.record(start.elapsed().as_secs_f64());
     }
