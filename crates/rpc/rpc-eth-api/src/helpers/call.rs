@@ -323,23 +323,23 @@ pub trait EthCall: EstimateCall + Call + LoadPendingBlock + LoadBlock + FullEthA
             let mut target_block = block_number.unwrap_or_default();
             let is_block_target_pending = target_block.is_pending();
 
-            let block = if is_block_target_pending {
-                self.recovered_block(target_block)
-                    .await?
-                    .ok_or(EthApiError::HeaderNotFound(target_block))?
-            } else {
-                let block_hash = self
+            // if it's not pending, we should always use block_hash over block_number to ensure that
+            // different provider calls query data related to the same block.
+            if !is_block_target_pending {
+                let Some(block_hash) = self
                     .provider()
                     .block_hash_for_id(target_block)
                     .map_err(Self::Error::from_eth_err::<ProviderError>)?
-                    .ok_or(EthApiError::HeaderNotFound(target_block))?;
+                else {
+                    return Err(EthApiError::HeaderNotFound(target_block).into())
+                };
                 target_block = block_hash.into();
-                self.cache()
-                    .get_recovered_block(block_hash)
-                    .await
-                    .map_err(Self::Error::from_eth_err)?
-                    .ok_or(EthApiError::HeaderNotFound(target_block))?
-            };
+            }
+
+            let block = self
+                .recovered_block(target_block)
+                .await?
+                .ok_or(EthApiError::HeaderNotFound(target_block))?;
             let evm_env = self.evm_env_for_header(block.sealed_block().sealed_header())?;
 
             // we're essentially replaying the transactions in the block here, hence we need the
