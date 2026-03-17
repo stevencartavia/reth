@@ -127,9 +127,11 @@ pub trait EthCall: EstimateCall + Call + LoadPendingBlock + LoadBlock + FullEthA
                         .into());
                     }
 
+                    let attributes = this.next_env_attributes(&parent)?;
+
                     let mut evm_env = this
                         .evm_config()
-                        .next_evm_env(&parent, &this.next_env_attributes(&parent)?)
+                        .next_evm_env(&parent, &attributes)
                         .map_err(RethError::other)
                         .map_err(Self::Error::from_eth_err)?;
 
@@ -205,7 +207,7 @@ pub trait EthCall: EstimateCall + Call + LoadPendingBlock + LoadBlock + FullEthA
 
                     let ctx = this
                         .evm_config()
-                        .context_for_next_block(&parent, this.next_env_attributes(&parent)?)
+                        .context_for_next_block(&parent, attributes)
                         .map_err(RethError::other)
                         .map_err(Self::Error::from_eth_err)?;
                     let map_err = |e: EthApiError| -> Self::Error {
@@ -321,23 +323,23 @@ pub trait EthCall: EstimateCall + Call + LoadPendingBlock + LoadBlock + FullEthA
             let mut target_block = block_number.unwrap_or_default();
             let is_block_target_pending = target_block.is_pending();
 
-            // if it's not pending, we should always use block_hash over block_number to ensure that
-            // different provider calls query data related to the same block.
-            if !is_block_target_pending {
-                let Some(block_hash) = self
+            let block = if is_block_target_pending {
+                self.recovered_block(target_block)
+                    .await?
+                    .ok_or(EthApiError::HeaderNotFound(target_block))?
+            } else {
+                let block_hash = self
                     .provider()
                     .block_hash_for_id(target_block)
                     .map_err(Self::Error::from_eth_err::<ProviderError>)?
-                else {
-                    return Err(EthApiError::HeaderNotFound(target_block).into())
-                };
+                    .ok_or(EthApiError::HeaderNotFound(target_block))?;
                 target_block = block_hash.into();
-            }
-
-            let block = self
-                .recovered_block(target_block)
-                .await?
-                .ok_or(EthApiError::HeaderNotFound(target_block))?;
+                self.cache()
+                    .get_recovered_block(block_hash)
+                    .await
+                    .map_err(Self::Error::from_eth_err)?
+                    .ok_or(EthApiError::HeaderNotFound(target_block))?
+            };
             let evm_env = self.evm_env_for_header(block.sealed_block().sealed_header())?;
 
             // we're essentially replaying the transactions in the block here, hence we need the
