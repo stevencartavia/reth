@@ -233,6 +233,13 @@ pub trait EthTransactions: LoadTransaction<Provider: BlockReaderIdExt> {
         Self: LoadReceipt + 'static,
     {
         async move {
+            // Fast path: block and receipts both cached — convert in-place.
+            if let Some(cached) = self.cache().get_transaction_by_hash(hash).await &&
+                let Some(result) = cached.into_receipt::<Self::Primitives, _>(self.converter())
+            {
+                return Ok(Some(result?));
+            }
+
             match self.load_transaction_and_receipt(hash).await? {
                 Some((tx, meta, receipt)) => {
                     self.build_transaction_receipt(tx, meta, receipt).await.map(Some)
