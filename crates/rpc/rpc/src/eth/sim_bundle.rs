@@ -231,16 +231,18 @@ where
         let flattened_bundle = self.parse_and_flatten_bundle(&request)?;
 
         let block_id = parent_block.unwrap_or(BlockId::Number(BlockNumberOrTag::Latest));
-        let (mut evm_env, current_block_id) = self.eth_api().evm_env_at(block_id).await?;
-        let current_block = self.eth_api().recovered_block(current_block_id).await?;
+        let current_block = self.eth_api().recovered_block(block_id).await?;
         let current_block = current_block.ok_or(EthApiError::HeaderNotFound(block_id))?;
+        let mut evm_env =
+            self.eth_api().evm_env_for_header(current_block.sealed_block().sealed_header())?;
+        let current_block_hash = current_block.hash();
 
         let eth_api = self.inner.eth_api.clone();
 
         let sim_response = self
             .inner
             .eth_api
-            .spawn_with_state_at_block(current_block_id, move |_, mut db| {
+            .spawn_with_state_at_block(current_block_hash, move |_, mut db| {
                 // Setup environment
                 let current_block_number = current_block.number();
                 let coinbase = evm_env.block_env.beneficiary();

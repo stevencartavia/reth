@@ -93,7 +93,7 @@ pub trait EthCall: EstimateCall + Call + LoadPendingBlock + LoadBlock + FullEthA
                 self.recovered_block(block).await?.ok_or(EthApiError::HeaderNotFound(block))?;
             let mut parent = base_block.sealed_header().clone();
 
-            self.spawn_with_state_at_block(block, move |this, mut db| {
+            self.spawn_with_state_at_block(base_block.hash(), move |this, mut db| {
                 let mut blocks: Vec<SimulatedBlock<RpcBlock<Self::NetworkTypes>>> =
                     Vec::with_capacity(block_state_calls.len());
 
