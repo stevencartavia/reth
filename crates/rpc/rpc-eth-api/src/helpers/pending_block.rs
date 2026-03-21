@@ -262,9 +262,9 @@ pub trait LoadPendingBlock:
 
         builder.apply_pre_execution_changes().map_err(Self::Error::from_eth_err)?;
 
-        let block_gas_limit: u64 = builder.evm_mut().block().gas_limit();
-        let basefee = builder.evm_mut().block().basefee();
-        let blob_gasprice = builder.evm_mut().block().blob_gasprice().map(|p| p as u64);
+        let block_gas_limit: u64 = builder.evm().block().gas_limit();
+        let basefee = builder.evm().block().basefee();
+        let blob_gasprice = builder.evm().block().blob_gasprice().map(|p| p as u64);
 
         let blob_params = self
             .provider()
