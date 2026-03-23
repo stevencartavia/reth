@@ -437,11 +437,11 @@ where
 
                     let transactions = block.transactions_recovered().take(num_txs);
 
-                    // Execute all transactions until index
+                    // Execute all transactions until index, reusing a single EVM instance
+                    let mut evm = eth_api.evm_config().evm_with_env(&mut db, evm_env.clone());
                     for tx in transactions {
                         let tx_env = eth_api.evm_config().tx_env(tx);
-                        let res = eth_api.transact(&mut db, evm_env.clone(), tx_env)?;
-                        db.commit(res.state);
+                        evm.transact_commit(tx_env).map_err(Eth::Error::from_evm_err)?;
                     }
                 }
 
