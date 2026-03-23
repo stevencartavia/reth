@@ -303,18 +303,23 @@ where
             };
         }
 
-        let gas_used = match builder.execute_transaction(tx.clone()) {
+        // Cache fields needed after execution before moving tx into execute_transaction
+        let tx_blob_count = tx.blob_versioned_hashes().map(|h| h.len() as u64);
+        let miner_fee = tx.effective_tip_per_gas(base_fee);
+        let tx_hash = *tx.tx_hash();
+
+        let gas_used = match builder.execute_transaction(tx) {
             Ok(gas_used) => gas_used,
             Err(BlockExecutionError::Validation(BlockValidationError::InvalidTx {
                 error, ..
             })) => {
                 if error.is_nonce_too_low() {
                     // if the nonce is too low, we can skip this transaction
-                    trace!(target: "payload_builder", %error, ?tx, "skipping nonce too low transaction");
+                    trace!(target: "payload_builder", %error, ?tx_hash, "skipping nonce too low transaction");
                 } else {
                     // if the transaction is invalid, we can skip it and all of its
                     // descendants
-                    trace!(target: "payload_builder", %error, ?tx, "skipping invalid transaction and its descendants");
+                    trace!(target: "payload_builder", %error, ?tx_hash, "skipping invalid transaction and its descendants");
                     best_txs.mark_invalid(
                         &pool_tx,
                         &InvalidPoolTransactionError::Consensus(
@@ -329,8 +334,8 @@ where
         };
 
         // add to the total blob gas used if the transaction successfully executed
-        if let Some(blob_hashes) = tx.blob_versioned_hashes() {
-            block_blob_count += blob_hashes.len() as u64;
+        if let Some(blob_count) = tx_blob_count {
+            block_blob_count += blob_count;
 
             // if we've reached the max blob count, we can skip blob txs entirely
             if block_blob_count == max_blob_count {
@@ -341,8 +346,7 @@ where
         block_transactions_rlp_length += tx_rlp_len;
 
         // update and add to total fees
-        let miner_fee =
-            tx.effective_tip_per_gas(base_fee).expect("fee is always valid; execution succeeded");
+        let miner_fee = miner_fee.expect("fee is always valid; execution succeeded");
         total_fees += U256::from(miner_fee) * U256::from(gas_used);
         cumulative_gas_used += gas_used;
 
