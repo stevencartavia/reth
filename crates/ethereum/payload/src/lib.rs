@@ -253,9 +253,9 @@ where
         // There's only limited amount of blob space available per block, so we need to check if
         // the EIP-4844 can still fit in the block
         let mut blob_tx_sidecar = None;
-        if let Some(blob_hashes) = tx.blob_versioned_hashes() {
-            let tx_blob_count = blob_hashes.len() as u64;
+        let tx_blob_count = tx.blob_count();
 
+        if let Some(tx_blob_count) = tx_blob_count {
             if block_blob_count + tx_blob_count > max_blob_count {
                 // we can't fit this _blob_ transaction into the block, so we mark it as
                 // invalid, which removes its dependent transactions from
@@ -303,8 +303,6 @@ where
             };
         }
 
-        // Cache fields needed after execution before moving tx into execute_transaction
-        let tx_blob_count = tx.blob_versioned_hashes().map(|h| h.len() as u64);
         let miner_fee = tx.effective_tip_per_gas(base_fee);
         let tx_hash = *tx.tx_hash();
 
