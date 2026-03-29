@@ -137,25 +137,19 @@ impl reth_codecs::Compact for Bytecode {
     {
         use compact_ids::{EIP7702_BYTECODE_ID, LEGACY_ANALYZED_BYTECODE_ID};
 
-        let bytecode = match &self.0 {
-            RevmBytecode::LegacyAnalyzed(analyzed) => analyzed.bytecode(),
-            RevmBytecode::Eip7702(eip7702) => eip7702.raw(),
-        };
+        let bytecode = self.0.original_byte_slice();
         buf.put_u32(bytecode.len() as u32);
-        buf.put_slice(bytecode.as_ref());
-        let len = match &self.0 {
-            // [`REMOVED_BYTECODE_ID`] has been removed.
-            RevmBytecode::LegacyAnalyzed(analyzed) => {
-                buf.put_u8(LEGACY_ANALYZED_BYTECODE_ID);
-                buf.put_u64(analyzed.original_len() as u64);
-                let map = analyzed.jump_table().as_slice();
-                buf.put_slice(map);
-                1 + 8 + map.len()
-            }
-            RevmBytecode::Eip7702(_) => {
-                buf.put_u8(EIP7702_BYTECODE_ID);
-                1
-            }
+        buf.put_slice(bytecode);
+        let len = if self.0.is_eip7702() {
+            buf.put_u8(EIP7702_BYTECODE_ID);
+            1
+        } else {
+            // Legacy analyzed
+            buf.put_u8(LEGACY_ANALYZED_BYTECODE_ID);
+            buf.put_u64(self.0.len() as u64);
+            let map = self.0.legacy_jump_table().map(|jt| jt.as_slice()).unwrap_or_default();
+            buf.put_slice(map);
+            1 + 8 + map.len()
         };
         len + bytecode.len() + 4
     }

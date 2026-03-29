@@ -3,7 +3,9 @@ use alloc::{
     vec::Vec,
 };
 use alloy_primitives::{Address, BlockNumber, B256, U256};
-use core::ops::{RangeBounds, RangeInclusive};
+#[cfg(feature = "db-api")]
+use core::ops::RangeBounds;
+use core::ops::RangeInclusive;
 use reth_primitives_traits::{StorageEntry, StorageSlotKey};
 use reth_storage_errors::provider::ProviderResult;
 

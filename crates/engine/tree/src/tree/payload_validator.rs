@@ -709,7 +709,6 @@ where
         let mut db = State::builder()
             .with_database(StateProviderDatabase::new(state_provider))
             .with_bundle_update()
-            .without_state_clear()
             .build();
 
         let spec_id = *env.evm_env.spec_id();
@@ -720,7 +719,7 @@ where
 
         if !self.config.precompile_cache_disabled() {
             // Only cache pure precompiles to avoid issues with stateful precompiles
-            executor.evm_mut().precompiles_mut().map_pure_precompiles(|address, precompile| {
+            executor.evm_mut().precompiles_mut().map_cacheable_precompiles(|address, precompile| {
                 let metrics = self
                     .precompile_cache_metrics
                     .entry(*address)

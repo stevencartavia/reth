@@ -10,7 +10,7 @@ use alloy_primitives::{Address, U256};
 use alloy_rpc_types_eth::{request::TransactionRequest, Transaction, TransactionInfo};
 use core::error;
 use dyn_clone::DynClone;
-use reth_evm::{BlockEnvFor, ConfigureEvm, EvmEnvFor, TxEnvFor};
+use reth_evm::{BlockEnvFor, ConfigureEvm, EvmEnvFor, SpecFor, TxEnvFor};
 use reth_primitives_traits::{
     BlockTy, HeaderTy, NodePrimitives, SealedBlock, SealedHeader, SealedHeaderFor, TransactionMeta,
     TxTy,
@@ -443,7 +443,7 @@ pub trait TxEnvConverter<TxReq, Evm: ConfigureEvm>:
 
 impl<TxReq, Evm> TxEnvConverter<TxReq, Evm> for ()
 where
-    TxReq: TryIntoTxEnv<TxEnvFor<Evm>, BlockEnvFor<Evm>>,
+    TxReq: TryIntoTxEnv<TxEnvFor<Evm>, SpecFor<Evm>, BlockEnvFor<Evm>>,
     Evm: ConfigureEvm,
 {
     type Error = TxReq::Err;
