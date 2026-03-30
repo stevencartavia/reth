@@ -6336,25 +6336,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "op-alloy-rpc-types"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be9d16ec9f7810e0623a37edc293d1c05fe9c58a5647f6973fdd93e0b4795015"
-dependencies = [
- "alloy-consensus",
- "alloy-eips",
- "alloy-network-primitives",
- "alloy-primitives",
- "alloy-rpc-types-eth",
- "alloy-serde",
- "derive_more",
- "op-alloy-consensus",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "op-alloy-rpc-types-engine"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
