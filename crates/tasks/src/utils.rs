@@ -45,7 +45,7 @@ pub fn increase_thread_priority() {
 /// Should be called once after tracing is initialized.
 ///
 /// No-op on non-Linux platforms.
-pub fn deprioritize_background_threads() {
+pub const fn deprioritize_background_threads() {
     #[cfg(target_os = "linux")]
     _deprioritize_background_threads();
 }
