@@ -275,38 +275,39 @@ pub fn create_chain_config(
     // Check if DAO fork is supported (it has an activation block)
     let dao_fork_support = hardforks.fork(EthereumHardfork::Dao) != ForkCondition::Never;
 
-    let mut config = ChainConfig::default();
-    config.chain_id = chain.map(|c| c.id()).unwrap_or(0);
-    config.homestead_block = block_num(EthereumHardfork::Homestead);
-    config.dao_fork_block = block_num(EthereumHardfork::Dao);
-    config.dao_fork_support = dao_fork_support;
-    config.eip150_block = block_num(EthereumHardfork::Tangerine);
-    config.eip155_block = block_num(EthereumHardfork::SpuriousDragon);
-    config.eip158_block = block_num(EthereumHardfork::SpuriousDragon);
-    config.byzantium_block = block_num(EthereumHardfork::Byzantium);
-    config.constantinople_block = block_num(EthereumHardfork::Constantinople);
-    config.petersburg_block = block_num(EthereumHardfork::Petersburg);
-    config.istanbul_block = block_num(EthereumHardfork::Istanbul);
-    config.muir_glacier_block = block_num(EthereumHardfork::MuirGlacier);
-    config.berlin_block = block_num(EthereumHardfork::Berlin);
-    config.london_block = block_num(EthereumHardfork::London);
-    config.arrow_glacier_block = block_num(EthereumHardfork::ArrowGlacier);
-    config.gray_glacier_block = block_num(EthereumHardfork::GrayGlacier);
-    config.merge_netsplit_block = None;
-    config.shanghai_time = timestamp(EthereumHardfork::Shanghai);
-    config.cancun_time = timestamp(EthereumHardfork::Cancun);
-    config.prague_time = timestamp(EthereumHardfork::Prague);
-    config.osaka_time = timestamp(EthereumHardfork::Osaka);
-    config.bpo1_time = timestamp(EthereumHardfork::Bpo1);
-    config.bpo2_time = timestamp(EthereumHardfork::Bpo2);
-    config.bpo3_time = timestamp(EthereumHardfork::Bpo3);
-    config.bpo4_time = timestamp(EthereumHardfork::Bpo4);
-    config.bpo5_time = timestamp(EthereumHardfork::Bpo5);
-    config.terminal_total_difficulty = terminal_total_difficulty;
-    config.terminal_total_difficulty_passed = terminal_total_difficulty_passed;
-    config.deposit_contract_address = deposit_contract_address;
-    config.blob_schedule = blob_schedule;
-    config
+    ChainConfig {
+        chain_id: chain.map(|c| c.id()).unwrap_or(0),
+        homestead_block: block_num(EthereumHardfork::Homestead),
+        dao_fork_block: block_num(EthereumHardfork::Dao),
+        dao_fork_support,
+        eip150_block: block_num(EthereumHardfork::Tangerine),
+        eip155_block: block_num(EthereumHardfork::SpuriousDragon),
+        eip158_block: block_num(EthereumHardfork::SpuriousDragon),
+        byzantium_block: block_num(EthereumHardfork::Byzantium),
+        constantinople_block: block_num(EthereumHardfork::Constantinople),
+        petersburg_block: block_num(EthereumHardfork::Petersburg),
+        istanbul_block: block_num(EthereumHardfork::Istanbul),
+        muir_glacier_block: block_num(EthereumHardfork::MuirGlacier),
+        berlin_block: block_num(EthereumHardfork::Berlin),
+        london_block: block_num(EthereumHardfork::London),
+        arrow_glacier_block: block_num(EthereumHardfork::ArrowGlacier),
+        gray_glacier_block: block_num(EthereumHardfork::GrayGlacier),
+        merge_netsplit_block: None,
+        shanghai_time: timestamp(EthereumHardfork::Shanghai),
+        cancun_time: timestamp(EthereumHardfork::Cancun),
+        prague_time: timestamp(EthereumHardfork::Prague),
+        osaka_time: timestamp(EthereumHardfork::Osaka),
+        bpo1_time: timestamp(EthereumHardfork::Bpo1),
+        bpo2_time: timestamp(EthereumHardfork::Bpo2),
+        bpo3_time: timestamp(EthereumHardfork::Bpo3),
+        bpo4_time: timestamp(EthereumHardfork::Bpo4),
+        bpo5_time: timestamp(EthereumHardfork::Bpo5),
+        terminal_total_difficulty,
+        terminal_total_difficulty_passed,
+        deposit_contract_address,
+        blob_schedule,
+        ..Default::default()
+    }
 }
 
 /// Returns a [`ChainConfig`] for the current Ethereum mainnet chain.
@@ -2636,23 +2637,22 @@ Post-merge hard forks (timestamp based):
     #[test]
     fn test_genesis_format_deserialization() {
         // custom genesis with chain config
-        let config = {
-            let mut c = ChainConfig::default();
-            c.chain_id = 2600;
-            c.homestead_block = Some(0);
-            c.eip150_block = Some(0);
-            c.eip155_block = Some(0);
-            c.eip158_block = Some(0);
-            c.byzantium_block = Some(0);
-            c.constantinople_block = Some(0);
-            c.petersburg_block = Some(0);
-            c.istanbul_block = Some(0);
-            c.berlin_block = Some(0);
-            c.london_block = Some(0);
-            c.shanghai_time = Some(0);
-            c.terminal_total_difficulty = Some(U256::ZERO);
-            c.terminal_total_difficulty_passed = true;
-            c
+        let config = ChainConfig {
+            chain_id: 2600,
+            homestead_block: Some(0),
+            eip150_block: Some(0),
+            eip155_block: Some(0),
+            eip158_block: Some(0),
+            byzantium_block: Some(0),
+            constantinople_block: Some(0),
+            petersburg_block: Some(0),
+            istanbul_block: Some(0),
+            berlin_block: Some(0),
+            london_block: Some(0),
+            shanghai_time: Some(0),
+            terminal_total_difficulty: Some(U256::ZERO),
+            terminal_total_difficulty_passed: true,
+            ..Default::default()
         };
         // genesis
         let genesis = Genesis {
@@ -2739,29 +2739,28 @@ Post-merge hard forks (timestamp based):
     #[test]
     fn test_fork_order_ethereum_mainnet() {
         let genesis = Genesis {
-            config: {
-                let mut c = ChainConfig::default();
-                c.chain_id = 0;
-                c.homestead_block = Some(0);
-                c.dao_fork_block = Some(0);
-                c.dao_fork_support = false;
-                c.eip150_block = Some(0);
-                c.eip155_block = Some(0);
-                c.eip158_block = Some(0);
-                c.byzantium_block = Some(0);
-                c.constantinople_block = Some(0);
-                c.petersburg_block = Some(0);
-                c.istanbul_block = Some(0);
-                c.muir_glacier_block = Some(0);
-                c.berlin_block = Some(0);
-                c.london_block = Some(0);
-                c.arrow_glacier_block = Some(0);
-                c.gray_glacier_block = Some(0);
-                c.merge_netsplit_block = Some(0);
-                c.shanghai_time = Some(0);
-                c.cancun_time = Some(0);
-                c.terminal_total_difficulty = Some(U256::ZERO);
-                c
+            config: ChainConfig {
+                chain_id: 0,
+                homestead_block: Some(0),
+                dao_fork_block: Some(0),
+                dao_fork_support: false,
+                eip150_block: Some(0),
+                eip155_block: Some(0),
+                eip158_block: Some(0),
+                byzantium_block: Some(0),
+                constantinople_block: Some(0),
+                petersburg_block: Some(0),
+                istanbul_block: Some(0),
+                muir_glacier_block: Some(0),
+                berlin_block: Some(0),
+                london_block: Some(0),
+                arrow_glacier_block: Some(0),
+                gray_glacier_block: Some(0),
+                merge_netsplit_block: Some(0),
+                shanghai_time: Some(0),
+                cancun_time: Some(0),
+                terminal_total_difficulty: Some(U256::ZERO),
+                ..Default::default()
             },
             ..Default::default()
         };
