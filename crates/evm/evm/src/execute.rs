@@ -6,7 +6,7 @@ use alloy_consensus::{BlockHeader, Header};
 use alloy_eips::eip2718::WithEncoded;
 pub use alloy_evm::block::{BlockExecutor, BlockExecutorFactory};
 use alloy_evm::{
-    block::{CommitChanges, ExecutableTxParts},
+    block::{CommitChanges, ExecutableTxParts, TxResult},
     Evm, EvmEnv, EvmFactory, RecoveredTx, ToTxEnv,
 };
 use alloy_primitives::{Address, B256};
@@ -470,7 +470,9 @@ where
     ) -> Result<Option<u64>, BlockExecutionError> {
         let (tx_env, tx) = tx.into_parts();
         if let Some(gas_used) =
-            self.executor.execute_transaction_with_commit_condition((tx_env, &tx), f)?
+            self.executor.execute_transaction_with_commit_condition((tx_env, &tx), |result| {
+                f(&result.result().result)
+            })?
         {
             self.transactions.push(tx);
             Ok(Some(gas_used))
